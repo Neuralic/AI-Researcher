@@ -26,7 +26,7 @@ class QueryResponse(BaseModel):
     follow_ups:Optional[list]=None
 
 app=FastAPI(title="GOAT")
-app.mount("/",StaticFiles(directory=".",html=True),name="static")
+
 
 LLMS={
     "deepseek":{"url":"https://openrouter.ai/api/v1/chat/completions","headers":lambda:{"Authorization":f"Bearer {os.getenv('OPENROUTER_KEY')}"}if os.getenv("OPENROUTER_KEY")else None,"payload":lambda p:{"model":"deepseek/deepseek-r1:free","messages":[{"role":"user","content":p}]},"extract":lambda j:j["choices"][0]["message"]["content"]},
@@ -99,3 +99,4 @@ async def get_audio(content:str=Query(...)):
 
 @app.get("/health")
 async def health():return{"status":"GOAT","timestamp":datetime.utcnow().isoformat()}
+app.mount("/",StaticFiles(directory=".",html=True),name="static")
