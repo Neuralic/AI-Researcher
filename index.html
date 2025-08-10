@@ -1,38 +1,96 @@
-<!-- index.html -->
+
+---
+
+### ✅ index.html (single file, root folder)
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Hybrid Research Agent</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <title>GOAT Research Agent 🐐</title>
+  <style>
+    body{font-family:Inter,Arial,Helvetica,sans-serif;background:#f5f7fa;color:#1e293b;margin:0;padding:2rem}
+    .container{max-width:720px;margin:auto}
+    h1{color:#6366f1}
+    textarea{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px;margin-bottom:1rem}
+    select,button{padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1}
+    button{background:#6366f1;color:#fff;border:none;cursor:pointer}
+    button:hover{background:#4f46e5}
+    .loader{display:none;font-style:italic}
+    .result{margin-top:1.5rem;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:1rem}
+    .result pre{background:#f1f5f9;border-radius:4px;padding:.5rem;overflow-x:auto}
+    .actions{margin-top:1rem}
+    .actions button{margin-right:.5rem}
+  </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>Hybrid Research Agent</h1>
-      <p class="subtitle">Academic Rigor × Chaos Innovation</p>
-    </header>
-
-    <form id="queryForm" class="query-form">
-      <label for="query">Research question</label>
-      <textarea id="query" rows="3" placeholder="e.g., methodology for bias detection…" required></textarea>
-
-      <label for="mode">Mode (auto-selects if left blank)</label>
+    <h1>AI Research Agent</h1>
+    <form id="queryForm">
+      <label>Research question</label>
+      <textarea id="query" rows="3" placeholder="e.g., Effects of AI on WhatsApp" required></textarea>
+      <label>Mode (auto-selects if left blank)</label>
       <select id="mode">
         <option value="">Auto</option>
         <option value="academic">Academic</option>
         <option value="chaos">Chaos</option>
         <option value="hybrid">Hybrid</option>
       </select>
-
       <button type="submit">Run</button>
     </form>
-
-    <div id="loader" class="loader hidden">Working…</div>
-
-    <article id="result" class="result hidden"></article>
+    <div id="loader" class="loader">Working…</div>
+    <div id="result" class="result" style="display:none;"></div>
+    <div id="actions" class="actions" style="display:none;">
+      <button onclick="downloadPDF()">📄 PDF</button>
+      <button onclick="downloadAudio()">🎧 Audio</button>
+    </div>
   </div>
 
-  <script src="app.js"></script>
+  <script>
+    const form = document.getElementById('queryForm');
+    const loader = document.getElementById('loader');
+    const result = document.getElementById('result');
+    const actions = document.getElementById('actions');
+    let lastContent = '';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loader.style.display = 'block';
+      result.style.display = 'none';
+      actions.style.display = 'none';
+
+      const payload = {
+        query: document.getElementById('query').value.trim(),
+        mode_override: document.getElementById('mode').value || undefined
+      };
+
+      try {
+        const res = await fetch('/research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        lastContent = data.content;
+        result.innerHTML = data.content;
+        result.style.display = 'block';
+        actions.style.display = 'block';
+      } catch (err) {
+        result.innerHTML = `<span style="color:red">Error: ${err.message}</span>`;
+        result.style.display = 'block';
+      } finally {
+        loader.style.display = 'none';
+      }
+    });
+
+    function downloadPDF() {
+      if (!lastContent) return;
+      window.open(`/pdf?content=${encodeURIComponent(lastContent)}`);
+    }
+    function downloadAudio() {
+      if (!lastContent) return;
+      window.open(`/audio?content=${encodeURIComponent(lastContent)}`);
+    }
+  </script>
 </body>
 </html>
