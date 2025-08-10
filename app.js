@@ -1,9 +1,11 @@
 // app.js
-const form = document.getElementById('queryForm');
-const loader = document.getElementById('loader');
-const result = document.getElementById('result');
+const API_URL = '/research';
 
-form.addEventListener('submit', async e => {
+const form    = document.getElementById('queryForm');
+const loader  = document.getElementById('loader');
+const result  = document.getElementById('result');
+
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
   loader.classList.remove('hidden');
   result.classList.add('hidden');
@@ -14,16 +16,23 @@ form.addEventListener('submit', async e => {
   };
 
   try {
-    const res = await fetch('/research', {
+    const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    if (!res.ok) throw new Error(await res.text());
+
+    if (!res.ok) {
+      const msg = await res.text();
+      throw new Error(msg || res.statusText);
+    }
+
     const data = await res.json();
-    result.textContent = data.content;
+    result.innerHTML = data.content
+      .replace(/\n/g, '<br>')
+      .replace(/!\!CHAOS\!\!/g, '<span style="color:#ef4444;font-weight:bold">!!CHAOS!!</span>');
   } catch (err) {
-    result.textContent = 'Error: ' + err.message;
+    result.innerHTML = `<span style="color:#ef4444">Error: ${err.message}</span>`;
   } finally {
     loader.classList.add('hidden');
     result.classList.remove('hidden');
