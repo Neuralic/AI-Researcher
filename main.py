@@ -1,4 +1,4 @@
-# main.py  –  GOAT edition (single file, root folder)
+# main.py  –  GOAT edition (fixed keys & models)
 import os, asyncio, httpx, random
 from datetime import datetime
 from typing import List, Dict, Optional
@@ -34,6 +34,20 @@ async def research_endpoint(req: QueryRequest):
 async def health():
     return {"status": "GOAT", "timestamp": datetime.utcnow().isoformat()}
 
+@app.get("/diagnose")
+async def diagnose():
+    checks = {}
+    for name, cfg in LLMS.items():
+        if not cfg["headers"]():
+            checks[name] = "KEY_MISSING"
+            continue
+        try:
+            data = await call_api(cfg["url"], cfg["headers"](), cfg["payload"]("ping"))
+            checks[name] = "OK"
+        except Exception as e:
+            checks[name] = str(e)[:60]
+    return checks
+
 # ---------- static ----------
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
@@ -58,33 +72,30 @@ async def call_api(url: str, headers: dict, payload: dict, timeout: int = 30) ->
                 await asyncio.sleep(2 ** attempt)
     raise HTTPException(503, "API unavailable")
 
-# ---------- LLM map ----------
+# ---------- LLM map (fixed models & headers) ----------
 LLMS = {
     "deepseek": {
         "url": "https://openrouter.ai/api/v1/chat/completions",
-        "headers": lambda: {"Authorization": f"Bearer {os.getenv('OPENROUTER_KEY')}"},
-        "payload": lambda p: {"model": "deepseek/deepseek-r1:free",
-                              "messages": [{"role": "user", "content": p}]},
+        "headers": lambda: {"Authorization": f"Bearer {os.getenv('OPENROUTER_KEY')}"} if os.getenv("OPENROUTER_KEY") else None,
+        "payload": lambda p: {"model": "deepseek/deepseek-r1:free", "messages": [{"role": "user", "content": p}]},
         "extract": lambda j: j["choices"][0]["message"]["content"],
     },
     "gpt": {
         "url": "https://api.openai.com/v1/chat/completions",
-        "headers": lambda: {"Authorization": f"Bearer {os.getenv('OPENAI_KEY')}"},
-        "payload": lambda p: {"model": "gpt-3.5-turbo",
-                              "messages": [{"role": "user", "content": p}]},
+        "headers": lambda: {"Authorization": f"Bearer {os.getenv('OPENAI_KEY')}"} if os.getenv("OPENAI_KEY") else None,
+        "payload": lambda p: {"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": p}]},
         "extract": lambda j: j["choices"][0]["message"]["content"],
     },
     "gemini": {
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-        "headers": lambda: {"x-goog-api-key": os.getenv("GEMINI_KEY")},
+        "headers": lambda: {"x-goog-api-key": os.getenv("GEMINI_KEY")} if os.getenv("GEMINI_KEY") else None,
         "payload": lambda p: {"contents": [{"parts": [{"text": p}]}]},
         "extract": lambda j: j["candidates"][0]["content"]["parts"][0]["text"],
     },
     "deepseek_direct": {
         "url": "https://api.deepseek.com/v1/chat/completions",
-        "headers": lambda: {"Authorization": f"Bearer {os.getenv('DEEPSEEK_KEY')}"},
-        "payload": lambda p: {"model": "deepseek-chat",
-                              "messages": [{"role": "user", "content": p}]},
+        "headers": lambda: {"Authorization": f"Bearer {os.getenv('DEEPSEEK_KEY')}"} if os.getenv("DEEPSEEK_KEY") else None,
+        "payload": lambda p: {"model": "deepseek-chat", "messages": [{"role": "user", "content": p}]},
         "extract": lambda j: j["choices"][0]["message"]["content"],
     },
 }
@@ -145,16 +156,3 @@ async def hybrid_process(query: str) -> QueryResponse:
         chaos_score=ch.chaos_score,
         timestamp=datetime.utcnow().isoformat(),
     )
-@app.get("/diagnose")
-async def diagnose():
-    checks = {}
-    for name, cfg in LLMS.items():
-        if not cfg["headers"]():
-            checks[name] = "KEY_MISSING"
-            continue
-        try:
-            data = await call_api(cfg["url"], cfg["headers"](), cfg["payload"]("ping"))
-            checks[name] = "OK"
-        except Exception as e:
-            checks[name] = str(e)[:60]
-    return checks
