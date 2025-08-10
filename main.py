@@ -145,3 +145,16 @@ async def hybrid_process(query: str) -> QueryResponse:
         chaos_score=ch.chaos_score,
         timestamp=datetime.utcnow().isoformat(),
     )
+@app.get("/diagnose")
+async def diagnose():
+    checks = {}
+    for name, cfg in LLMS.items():
+        if not cfg["headers"]():
+            checks[name] = "KEY_MISSING"
+            continue
+        try:
+            data = await call_api(cfg["url"], cfg["headers"](), cfg["payload"]("ping"))
+            checks[name] = "OK"
+        except Exception as e:
+            checks[name] = str(e)[:60]
+    return checks
