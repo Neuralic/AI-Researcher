@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from datetime import datetime
 import httpx
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from academic_guard import AcademicGuard
 from chaos_engine import ChaosEngine
@@ -26,6 +28,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="Hybrid Research Agent", lifespan=lifespan)
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 def select_mode(query: str) -> str:
     if "methodology" in query.lower() or "literature review" in query.lower():
