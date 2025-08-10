@@ -23,7 +23,6 @@ class QueryResponse(BaseModel):
     follow_ups:Optional[List[str]]=None
 
 app=FastAPI(title="GOAT Research Agent")
-app.mount("/",StaticFiles(directory=".",html=True),name="static")
 
 LLMS={
     "deepseek":{
@@ -113,3 +112,4 @@ async def get_audio(content:str=Query(...)):
 
 @app.get("/health")
 async def health():return{"status":"GOAT","timestamp":datetime.utcnow().isoformat()}
+app.mount("/",StaticFiles(directory=".",html=True),name="static")
