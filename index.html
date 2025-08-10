@@ -1,0 +1,38 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Hybrid Research Agent</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Hybrid Research Agent</h1>
+      <p class="subtitle">Academic Rigor × Chaos Innovation</p>
+    </header>
+
+    <form id="queryForm" class="query-form">
+      <label for="query">Research question</label>
+      <textarea id="query" rows="3" placeholder="e.g., methodology for bias detection…" required></textarea>
+
+      <label for="mode">Mode (auto-selects if left blank)</label>
+      <select id="mode">
+        <option value="">Auto</option>
+        <option value="academic">Academic</option>
+        <option value="chaos">Chaos</option>
+        <option value="hybrid">Hybrid</option>
+      </select>
+
+      <button type="submit">Run</button>
+    </form>
+
+    <div id="loader" class="loader hidden">Working…</div>
+
+    <article id="result" class="result hidden"></article>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
