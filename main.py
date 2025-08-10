@@ -1,5 +1,5 @@
-# main.py  –  GOAT-edition  (4 LLMs, chaos dialled to 11)
-import os, asyncio, httpx, random, json
+# main.py  –  GOAT edition (single file, root folder)
+import os, asyncio, httpx, random
 from datetime import datetime
 from typing import List, Dict, Optional
 from fastapi import FastAPI, HTTPException
@@ -18,7 +18,7 @@ class QueryResponse(BaseModel):
     chaos_score: Optional[float] = None
     timestamp: str
 
-app = FastAPI(title="AI Research Agent 🐐")
+app = FastAPI(title="GOAT Research Agent")
 
 # ---------- API ----------
 @app.post("/research", response_model=QueryResponse)
@@ -58,18 +58,20 @@ async def call_api(url: str, headers: dict, payload: dict, timeout: int = 30) ->
                 await asyncio.sleep(2 ** attempt)
     raise HTTPException(503, "API unavailable")
 
-# ---------- multi-LLM chaos mixer ----------
+# ---------- LLM map ----------
 LLMS = {
     "deepseek": {
         "url": "https://openrouter.ai/api/v1/chat/completions",
         "headers": lambda: {"Authorization": f"Bearer {os.getenv('OPENROUTER_KEY')}"},
-        "payload": lambda p: {"model": "deepseek/deepseek-r1:free", "messages": [{"role": "user", "content": p}]},
+        "payload": lambda p: {"model": "deepseek/deepseek-r1:free",
+                              "messages": [{"role": "user", "content": p}]},
         "extract": lambda j: j["choices"][0]["message"]["content"],
     },
     "gpt": {
         "url": "https://api.openai.com/v1/chat/completions",
         "headers": lambda: {"Authorization": f"Bearer {os.getenv('OPENAI_KEY')}"},
-        "payload": lambda p: {"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": p}]},
+        "payload": lambda p: {"model": "gpt-3.5-turbo",
+                              "messages": [{"role": "user", "content": p}]},
         "extract": lambda j: j["choices"][0]["message"]["content"],
     },
     "gemini": {
@@ -81,49 +83,64 @@ LLMS = {
     "deepseek_direct": {
         "url": "https://api.deepseek.com/v1/chat/completions",
         "headers": lambda: {"Authorization": f"Bearer {os.getenv('DEEPSEEK_KEY')}"},
-        "payload": lambda p: {"model": "deepseek-chat", "messages": [{"role": "user", "content": p}]},
+        "payload": lambda p: {"model": "deepseek-chat",
+                              "messages": [{"role": "user", "content": p}]},
         "extract": lambda j: j["choices"][0]["message"]["content"],
     },
 }
 
 async def ask(llm: str, prompt: str) -> str:
     cfg = LLMS[llm]
-    if not cfg["headers"]():            # key not set
+    if not cfg["headers"]():
         return f"[{llm} disabled]"
     data = await call_api(cfg["url"], cfg["headers"](), cfg["payload"](prompt))
     return cfg["extract"](data)
 
+# ---------- GOAT generators ----------
 async def academic_process(query: str) -> QueryResponse:
-    parts = await asyncio.gather(
-        ask("deepseek", f"TRIPOD+AI paper on: {query}"),
-        ask("gpt",      f"Academic methodology for: {query}"),
-    )
-    content = "\n\n---\n".join(parts)
+    prompt = f"""
+You are a TRIPOD+AI methodology architect. Provide:
+
+1. **Structured checklist** (numbered).
+2. **Copy-paste Python snippet** (≤6 lines).
+3. **Mermaid flowchart** as raw text.
+4. **Provocation bullets** starting with !!PROVOKE!!.
+
+Topic: {query}
+"""
+    content = await ask("deepseek", prompt)
     return QueryResponse(
         mode="academic",
         content=content,
-        citations=[{"title": "Multi-LLM synthesis", "year": 2024}],
+        citations=[{"title": "GOAT TRIPOD+AI", "year": 2024}],
         timestamp=datetime.utcnow().isoformat(),
     )
 
 async def chaos_process(query: str) -> QueryResponse:
-    parts = await asyncio.gather(
-        ask("gemini", f"🔥CHAOS🔥 {query}"),
-        ask("deepseek_direct", f"Contradict everything about: {query}"),
-    )
+    prompts = [
+        f"🔥MAXIMUM CHAOS🔥 Weaponise bias-detection tools against themselves for {query}",
+        f"🌀REALITY DISTORTION🌀 A future where {query} is illegal.",
+        f"🐐GOAT INVERT🐐 Flip every assumption in {query} upside-down.",
+    ]
+    tasks = [ask(llm, p) for llm in ["gemini", "deepseek_direct"] for p in prompts[:2]]
+    parts = await asyncio.gather(*tasks)
     content = "\n\n💥💥💥\n".join(parts).upper()
     return QueryResponse(
         mode="chaos",
         content=content,
-        chaos_score=random.randint(90, 100),
+        chaos_score=random.randint(95, 100),
         timestamp=datetime.utcnow().isoformat(),
     )
 
 async def hybrid_process(query: str) -> QueryResponse:
     ac, ch = await asyncio.gather(academic_process(query), chaos_process(query))
+    fused = (
+        f"{ac.content}\n\n⚡GOAT FUSION⚡\n"
+        f"{ch.content}\n\n🧩Synthesis Score: {random.randint(95, 100)}"
+    )
     return QueryResponse(
         mode="hybrid",
-        content=f"{ac.content}\n\n⚡GOAT FUSION⚡\n{ch.content}",
+        content=fused,
         citations=ac.citations,
         chaos_score=ch.chaos_score,
         timestamp=datetime.utcnow().isoformat(),
