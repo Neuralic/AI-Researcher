@@ -8,6 +8,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer
 from reportlab.lib.units import inch
+from typing import Optional
 from reportlab.lib import colors
 import pyshorteners
 
