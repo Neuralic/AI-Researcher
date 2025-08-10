@@ -25,14 +25,26 @@ class QueryResponse(BaseModel):
 
 app = FastAPI(title="Hybrid Research Agent")
 
-# Static frontend files
+# API routes FIRST
+@app.post("/research", response_model=QueryResponse)
+async def research_endpoint(request: QueryRequest):
+    mode = request.mode_override or select_mode(request.query)
+    if mode == "academic":
+        return await academic_process(request.query)
+    if mode == "chaos":
+        return await chaos_process(request.query)
+    return await hybrid_process(request.query)
+
+@app.get("/health")
+async def health():
+    return {"status": "operational", "timestamp": datetime.utcnow().isoformat()}
+
+# Static files LAST
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
-@app.get("/")
-async def serve_frontend():
-    return FileResponse("index.html")
-
-# Dual-mode router
+# ----------------------------------------------------------
+# helpers below (unchanged)
+# ----------------------------------------------------------
 def select_mode(query: str) -> str:
     q = query.lower()
     if "methodology" in q or "literature review" in q:
@@ -41,7 +53,6 @@ def select_mode(query: str) -> str:
         return "chaos"
     return "hybrid"
 
-# API clients
 async def call_api(url: str, headers: dict, payload: dict, timeout: int = 30) -> dict:
     async with httpx.AsyncClient(timeout=timeout) as client:
         for attempt in range(3):
@@ -54,7 +65,6 @@ async def call_api(url: str, headers: dict, payload: dict, timeout: int = 30) ->
                 await asyncio.sleep(2 ** attempt)
         raise HTTPException(503, "API unavailable")
 
-# Processors
 async def academic_process(query: str) -> QueryResponse:
     guard = AcademicGuard()
     methodology = await guard.build_methodology(query)
@@ -123,17 +133,3 @@ async def hybrid_process(query: str) -> QueryResponse:
         chaos_score=chaos_res.chaos_score,
         timestamp=datetime.utcnow().isoformat(),
     )
-
-# API endpoint
-@app.post("/research", response_model=QueryResponse)
-async def research_endpoint(request: QueryRequest):
-    mode = request.mode_override or select_mode(request.query)
-    if mode == "academic":
-        return await academic_process(request.query)
-    if mode == "chaos":
-        return await chaos_process(request.query)
-    return await hybrid_process(request.query)
-
-@app.get("/health")
-async def health():
-    return {"status": "operational", "timestamp": datetime.utcnow().isoformat()}
