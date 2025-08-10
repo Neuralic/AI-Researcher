@@ -1,34 +1,37 @@
-import httpx, os, json
-from typing import List, Dict
-from datetime import datetime
-import asyncio
+import numpy as np
+from astropy.cosmology import Planck18
+from typing import Tuple
+import httpx, os, random
 
-class AcademicGuard:
+class ChaosEngine:
     def __init__(self):
-        self.nist_checklist = ["bias_detection", "transparency", "accountability", "privacy"]
+        self.cosmic_bg = Planck18.Tcmb0.value
         
-    async def build_methodology(self, query: str) -> str:
-        template = {
-            "design": "TRIPOD+AI",
-            "validation": "cross-validation",
-            "reporting": "CONSORT-AI"
-        }
-        return json.dumps(template)
+    async def quantum_seed(self) -> float:
+        noise = np.random.normal(self.cosmic_bg, 0.001)
+        return float(noise)
     
-    async def validate_citations(self, query: str) -> List[Dict]:
-        headers = {"x-api-key": os.getenv("S2_KEY", "demo")}
-        params = {"query": query, "limit": 5}
+    def reality_distortion(self, query: str) -> float:
+        base = hash(query) % 100
+        quantum = (self.cosmic_bg * 1000) % 1
+        return min(100.0, base + quantum * 30)
+    
+    async def adversarial_fusion(self, query: str) -> str:
+        apis = ["deepseek", "openai"]
+        selected = random.choice(apis)
         
+        headers = {"Authorization": f"Bearer {os.getenv(f'{selected.upper()}_KEY')}"}
+        prompt = f"Contradict everything about: {query}"
+        payload = {"messages": [{"role": "user", "content": prompt}]}
+        
+        if selected == "deepseek":
+            url = "https://api.deepseek.com/v1/chat/completions"
+        else:
+            url = "https://api.openai.com/v1/chat/completions"
+            
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.get("https://api.semanticscholar.org/graph/v1/paper/search", params=params)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    return [{"title": p["title"], "year": p.get("year", 2024)} for p in data.get("data", [])]
+                resp = await client.post(url, headers=headers, json=payload)
+                return resp.json()['choices'][0]['message']['content'][:200]
             except:
-                pass
-        return [{"title": "Demo Citation", "year": 2024}]
-    
-    async def ethics_screen(self, query: str) -> Dict:
-        checks = {check: True for check in self.nist_checklist}
-        return {"compliant": True, "checks": checks}
+                return "Contradiction unavailable"
