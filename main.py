@@ -26,7 +26,7 @@ class QueryResponse(BaseModel):
 app = FastAPI(title="Hybrid Research Agent")
 
 # Static frontend files
-app.mount("/static", StaticFiles(directory="."), name="static")
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 @app.get("/")
 async def serve_frontend():
