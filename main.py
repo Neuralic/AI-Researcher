@@ -39,7 +39,6 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-
 # --- API Keys & Environment Variables ---
 OPENROUTER_KEY = os.getenv("OPENROUTER_KEY")
 GEMINI_KEY = os.getenv("GEMINI_KEY")
@@ -106,7 +105,6 @@ async def ask_llm(model: str, prompt: str) -> str:
     data = await call_api(cfg["url"], cfg["headers"](), cfg["payload"](prompt))
     return cfg["extract"](data)
 
-
 # --- Data Fetching Service ---
 class FetchService:
     @staticmethod
@@ -139,7 +137,6 @@ class FetchService:
         all_sources_text = f"--- WEB SOURCES ---\n{web_sources}\n\n--- ARXIV SOURCES ---\n{arxiv_sources}"
         all_citations = web_citations + arxiv_citations
         return all_sources_text, all_citations
-
 
 # --- Ultra-Features: Prompts for the Reasoning Engine ---
 SYNTHESIS_PROMPT = """You are the Skeptic-in-Chief...""" # (Content omitted for brevity)
@@ -181,10 +178,11 @@ class ReasoningEngine:
         return final_content, citations
 
     @staticmethod
-async def run_simple_rag(query: str):
+    async def run_simple_rag(query: str):
         logging.info("Simple RAG workflow initiated.")
         sources_text, citations = await FetchService.search_sources(query)
-        if not sources_text.strip(): return "Could not find sufficient sources for simple search.", []
+        if not sources_text.strip(): 
+            return "Could not find sufficient sources for simple search.", []
         prompt = f"Using ONLY the provided sources, give a direct, concise, fact-based answer to the user's query. Extract key data points and statistics.\n\nSOURCES:\n{sources_text}\n\nQUERY:\n{query}"
         content = await ask_llm("technical", prompt)
         return content, citations
@@ -205,29 +203,23 @@ async def run_simple_rag(query: str):
             follow_ups = ["What is the most significant unaddressed limitation of this research?"]
         return metrics, follow_ups
 
-
 # --- Main FastAPI Endpoint ---
-
 @app.post("/research", response_model=QueryResponse)
 @limiter.limit("5/minute") # Lowered limit due to increased complexity
 async def research_endpoint(req: QueryRequest, request: Request):
     logging.info(f"Received HYBRID query: '{req.query}' from {request.client.host}")
     
     try:
-        # Ultra-Feature: Parallel Execution of RAG and Deep Reasoning workflows
         simple_rag_task = asyncio.create_task(ReasoningEngine.run_simple_rag(req.query))
         deep_reasoning_task = asyncio.create_task(ReasoningEngine.run_deep_reasoning(req.query))
 
         (simple_content, simple_citations), (deep_content, deep_citations) = await asyncio.gather(simple_rag_task, deep_reasoning_task)
 
-        # Merge and de-duplicate citations
         all_citations = list(set(simple_citations + deep_citations))
         
-        # Final Pass: Ultra Hybrid Synthesis
         logging.info("Initiating Ultra Hybrid Synthesis pass.")
         final_content = await ask_llm("primary", ULTRA_HYBRID_SYNTHESIS_PROMPT.format(simple_content=simple_content, deep_content=deep_content))
 
-        # Final pass to generate metadata on the hybrid content
         verification, follow_ups = await ReasoningEngine.run_verification_and_insights(final_content, all_citations)
         
         return QueryResponse(
@@ -250,5 +242,5 @@ async def research_endpoint(req: QueryRequest, request: Request):
 async def health_check():
     return {"status": f"GOAT v{app.version} is operational", "timestamp": datetime.utcnow().isoformat()}
 
-# Mount static files (for a web UI)
+# Mount static files
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
