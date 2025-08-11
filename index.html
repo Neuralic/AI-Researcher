@@ -1,58 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <title>AI Research Agent</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-    body{background:#f5f7fa;color:#1e293b;display:flex;justify-content:center;align-items:flex-start;padding:2rem}
-    .container{max-width:720px;width:100%}
-    h1{color:#6366f1;margin-bottom:.5rem}
-    textarea{width:100%;min-height:100px;border:1px solid #cbd5e1;border-radius:8px;padding:.75rem;font-size:1rem;margin-bottom:1rem;resize:vertical}
-    select,button{padding:.6rem 1rem;border:1px solid #cbd5e1;border-radius:8px;font-size:1rem}
-    button{background:#6366f1;color:#fff;border:none;cursor:pointer}
-    button:hover{background:#4f46e5}
-    .loader{display:none;font-style:italic;margin-top:1rem}
-    .result{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:1.5rem;margin-top:1.5rem;font-size:1rem;line-height:1.6;box-shadow:0 2px 8px rgba(0,0,0,.05)}
-    .result h3{color:#6366f1;margin:.5rem 0}
-    .result ul{margin-left:1.2em}
-    .result strong{font-weight:700}
-    .result pre{background:#f1f5f9;border-radius:4px;padding:.5em;overflow-x:auto;font-size:.9em}
-    .actions{margin-top:1rem}
-    .actions button{margin-right:.5rem}
-  </style>
+    <meta charset="UTF-8" />
+    <title>GOAT - Advanced AI Research Agent</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --background-color: #f5f7fa;
+            --text-color: #1e293b;
+            --card-background: #fff;
+            --border-color: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--background-color); color: var(--text-color); display: flex; justify-content: center; align-items: flex-start; padding: 2rem; }
+        .container { max-width: 800px; width: 100%; }
+        h1 { color: var(--primary-color); margin-bottom: 1rem; }
+        textarea { width: 100%; min-height: 100px; border: 1px solid #cbd5e1; border-radius: 8px; padding: .75rem; font-size: 1rem; margin-bottom: 1rem; resize: vertical; }
+        button { padding: .75rem 1.5rem; border-radius: 8px; font-size: 1rem; background: var(--primary-color); color: #fff; border: none; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background: var(--primary-hover); }
+        .loader { display: none; text-align: center; padding: 2rem; font-style: italic; }
+        .result-container { display: none; margin-top: 1.5rem; }
+        .result { background: var(--card-background); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; font-size: 1rem; line-height: 1.6; box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+        .result h3 { color: var(--primary-color); margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+        .result-content ul { margin-left: 1.2em; }
+        .result-content p { margin-bottom: 1em; }
+        .result-content pre { background: #f1f5f9; border-radius: 4px; padding: .5em; overflow-x: auto; font-size: .9em; }
+        .metrics { display: flex; gap: 1.5rem; margin-bottom: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px; }
+        .metric { text-align: center; }
+        .metric strong { font-size: 1.25rem; color: var(--primary-color); }
+        .metric span { font-size: 0.8rem; text-transform: uppercase; color: #64748b; }
+        .citations-list, .follow-ups-list { list-style: none; padding: 0; }
+        .citations-list li, .follow-ups-list li { background: #f8fafc; padding: 0.75rem; border-radius: 4px; margin-bottom: 0.5rem; }
+        .actions { margin-top: 1rem; text-align: right; }
+        .actions button { margin-left: .5rem; background: #475569; }
+        .actions button:hover { background: #334155; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🐐 GOAT Research Agent</h1>
-    <form id="queryForm">
-      <textarea id="query" placeholder="e.g., Effects of AI on WhatsApp" required></textarea>
-      <select id="mode">
-        <option value="">Auto</option>
-        <option value="academic">Academic</option>
-        <option value="chaos">Chaos</option>
-        <option value="hybrid">Hybrid</option>
-      </select>
-      <button type="submit">Run</button>
-    </form>
-    <div id="loader" class="loader">Working…</div>
-    <div id="result" class="result" style="display:none;"></div>
-    <div id="actions" class="actions" style="display:none;">
-      <button onclick="downloadPDF()">📄 PDF</button>
-      <button onclick="downloadAudio()">🎧 Audio</button>
+    <div class="container">
+        <h1>🐐 GOAT Research Agent</h1>
+        <form id="queryForm">
+            <textarea id="query" placeholder="e.g., Analyze recent advancements in quantum computing, including counterarguments." required></textarea>
+            <button type="submit">Run Research</button>
+        </form>
+
+        <div id="loader" class="loader">
+            <p>🤖 Agent at work... fetching sources, synthesizing, and verifying...</p>
+        </div>
+        
+        <div id="resultContainer" class="result-container">
+            <div id="result" class="result">
+                </div>
+            <div id="actions" class="actions">
+                <button onclick="downloadPDF()">📄 Download PDF</button>
+                <button onclick="downloadAudio()">🎧 Get Audio</button>
+            </div>
+        </div>
     </div>
-  </div>
-  <script>
-    const form=document.getElementById('queryForm'),loader=document.getElementById('loader'),result=document.getElementById('result'),actions=document.getElementById('actions');let lastContent='';
-    form.addEventListener('submit',async e=>{e.preventDefault();loader.style.display='block';result.style.display='none';actions.style.display='none';
-      const payload={query:document.getElementById('query').value.trim(),mode_override:document.getElementById('mode').value||undefined};
-      try{const res=await fetch('/research',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-        const data=await res.json();lastContent=data.content;result.innerHTML=data.content;result.style.display='block';actions.style.display='block';}
-      catch(err){result.innerHTML=`<span style="color:red">Error:${err.message}</span>`;result.style.display='block';}
-      finally{loader.style.display='none';}
-    });
-    function downloadPDF(){if(lastContent)window.open(`/pdf?content=${encodeURIComponent(lastContent)}`);}
-    function downloadAudio(){if(lastContent)window.open(`/audio?content=${encodeURIComponent(lastContent)}`);}
-  </script>
+
+    <script>
+        const form = document.getElementById('queryForm');
+        const loader = document.getElementById('loader');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultDiv = document.getElementById('result');
+        const actionsDiv = document.getElementById('actions');
+        let lastFullContent = '';
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            loader.style.display = 'block';
+            resultContainer.style.display = 'none';
+
+            const payload = { query: document.getElementById('query').value.trim() };
+
+            try {
+                const response = await fetch('/research', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                lastFullContent = data.content;
+                renderResults(data); // Use a dedicated render function
+                resultContainer.style.display = 'block';
+
+            } catch (err) {
+                resultDiv.innerHTML = `<p style="color:red"><strong>Error:</strong> ${err.message}</p>`;
+                resultContainer.style.display = 'block';
+                actionsDiv.style.display = 'none';
+            } finally {
+                loader.style.display = 'none';
+            }
+        });
+
+        function renderResults(data) {
+            let html = `
+                <div class="metrics">
+                    <div class="metric"><strong>${(data.verification.confidence_score * 100).toFixed(0)}%</strong><br><span>Confidence</span></div>
+                    <div class="metric"><strong>${(data.verification.bias_score * 100).toFixed(0)}%</strong><br><span>Bias Score</span></div>
+                    <div class="metric"><strong>${data.verification.sources_cross_checked}</strong><br><span>Sources Checked</span></div>
+                </div>
+
+                <h3>📜 Research Report</h3>
+                <div class="result-content">${data.content.replace(/\n/g, '<br>')}</div>
+
+                <h3>🔗 Citations</h3>
+                <ul class="citations-list">
+                    ${data.citations.map(c => `<li><a href="${c.url}" target="_blank">${c.title}</a> (${c.source_type}, ${c.year || 'N/A'})</li>`).join('')}
+                </ul>
+
+                <h3>🤔 Follow-up Questions</h3>
+                <ul class="follow-ups-list">
+                    ${data.follow_ups.map(q => `<li>${q}</li>`).join('')}
+                </ul>
+            `;
+            resultDiv.innerHTML = html;
+        }
+
+        function downloadPDF() {
+            if (lastFullContent) window.open(`/pdf?content=${encodeURIComponent(lastFullContent)}`, '_blank');
+        }
+
+        function downloadAudio() {
+            if (lastFullContent) window.open(`/audio?content=${encodeURIComponent(lastFullContent)}`, '_blank');
+        }
+    </script>
 </body>
 </html>
