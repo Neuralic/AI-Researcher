@@ -4,6 +4,7 @@ uvicorn[standard]
 httpx
 pydantic
 websockets
+python-multipart # Added to handle file uploads
 
 # --- Security & Scalability ---
 slowapi
@@ -20,7 +21,7 @@ reportlab
 pyshorteners
 
 # --- External Service Integrations ---
-google-search-results # Corrected package name for SerpApi
+google-search-results
 arxiv
 edge-tts
 
