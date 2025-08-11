@@ -359,4 +359,4 @@ async def health_check():
     return {"status": "GOAT is operational", "timestamp": datetime.utcnow().isoformat()}
 
 # Serve static files (like index.html) from the 'static' directory
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
