@@ -451,7 +451,7 @@ async def health_check():
     return {"status": "GOAT is operational", "timestamp": datetime.utcnow().isoformat()}
 
 # Mount a simple static file server for a potential web UI
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 # --- WebSocket for Agentic Interaction ---
 # // A truly agentic, real-time interactive mode, surpassing competitors.
