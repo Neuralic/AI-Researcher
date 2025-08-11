@@ -80,7 +80,7 @@ LLMS = {
     "technical": { # For classification, critique, and structured data tasks
         "url": "https://openrouter.ai/api/v1/chat/completions",
         "headers": lambda: {"Authorization": f"Bearer {OPENROUTER_KEY}"},
-        "payload": lambda p: {"model": "deepseek/deepseek-coder", "messages": [{"role": "user", "content": p}]},
+        "payload": lambda p: {"model": "deepseek/deepseek-coder-instruct", "messages": [{"role": "user", "content": p}]},
         "extract": lambda j: j["choices"][0]["message"]["content"]
     }
 }
